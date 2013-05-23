@@ -70,7 +70,7 @@
     ((percona-xtrabackup-p) (percona-xtrabackup-setup))
     ((percona-server-p) (percona-server-setup))))
 
-(defun percona-goto-project ()
+(defun percona-project-goto ()
   "reveal project associated with current heading in iTerm2"
   (interactive)
   (let
