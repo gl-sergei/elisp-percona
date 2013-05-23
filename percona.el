@@ -135,4 +135,19 @@
           (outline-next-preface)
           (point))))))
 
+(defun percona-branch-commit ()
+  (interactive)
+  (let ((f (make-temp-file "commit-message")))
+    (progn
+      (outline-write-body-to-file f)
+      (let
+        ((bug-id (if (percona-bug-p) (percona-launchpad-id-get) "")))
+          (run-it
+            (format
+              "%s/percona_commit.sh %s %s %s"
+              (percona-top-dir-get)
+              (percona-project-dir-full-get)
+              f
+              bug-id))))))
+
 (provide 'percona)
