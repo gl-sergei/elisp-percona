@@ -4,18 +4,20 @@
   "~/percona/repo")
 
 (defun launchpad-path-project-get (path)
-       (cond ((string= "percona-xtrabackup" (cadr (split-string path "/"))) "xb-")
-             (t "ps-")))
+  (cond
+    ((string= "percona-xtrabackup" (cadr (split-string path "/"))) "xb-")
+    (t "ps-")))
 
 (defun launchpad-path-bug-p (path)
-       (string= "+bug" (caddr (split-string path "/"))) "bug")
+  (string= "+bug" (caddr (split-string path "/"))) "bug")
 
 (defun launchpad-path-type-get (path)
-       (cond ((string= "+bug" (caddr (split-string path "/"))) "bug")
-             (t "blueprint-")))
+  (cond
+    ((string= "+bug" (caddr (split-string path "/"))) "bug")
+    (t "blueprint-")))
 
 (defun launchpad-path-id-get (path)
-       (file-name-base path))
+  (file-name-base path))
 
 (defun launchpad-url-path-get (launchpad-url)
   (url-filename (url-generic-parse-url launchpad-url)))
@@ -24,51 +26,57 @@
   (launchpad-path-id-get (url-filename)))
 
 (defun percona-generate-project-name (launchpad-url)
-       (let ((path (launchpad-url-path-get launchpad-url)))
-            (concat (launchpad-path-project-get path)
-                    (launchpad-path-type-get path)
-                    (launchpad-path-id-get path))))
+  (let
+    ((path (launchpad-url-path-get launchpad-url)))
+    (concat (launchpad-path-project-get path)
+    (launchpad-path-type-get path)
+    (launchpad-path-id-get path))))
 
 (defun run-it (command)
-       (async-shell-command command "*checkout*")
-       (pop-to-buffer "*checkout*")
-       (buffer-disable-undo))
+  (async-shell-command command "*checkout*")
+  (pop-to-buffer "*checkout*")
+  (buffer-disable-undo))
 
 (defun eventum-path-id-get (path)
-       (cadr (split-string path "=")))
+  (cadr (split-string path "=")))
 
 (defun percona-project-prefix-get (eventum-url)
-       (let ((issue-type-prefix
-              (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
-             (path (url-filename (url-generic-parse-url eventum-url))))
-             (concat issue-type-prefix (eventum-path-id-get path) "-")))
+  (let
+    ((issue-type-prefix (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
+     (path (url-filename (url-generic-parse-url eventum-url))))
+    (concat issue-type-prefix (eventum-path-id-get path) "-")))
 
 (defun percona-xtrabackup-setup ()
-       (let ((project-root
-              (concat (percona-project-prefix-get (org-entry-get nil "issue" 'inherit))
-                      (percona-generate-project-name (pecona-launchpad-url-get))))
-             (top-dir (percona-top-dir-get)))
-             (org-entry-put nil "project-root" project-root)
-             (run-it (concat top-dir "/percona_create_branches_wrapper.sh xb " project-root))))
+  (let
+    ((project-root
+      (concat
+        (percona-project-prefix-get (org-entry-get nil "issue" 'inherit))
+        (percona-generate-project-name (pecona-launchpad-url-get))))
+     (top-dir (percona-top-dir-get)))
+    (org-entry-put nil "project-root" project-root)
+    (run-it (concat top-dir "/percona_create_branches_wrapper.sh xb " project-root))))
 
 (defun percona-server-setup ()
-       (let ((project-root (percona-generate-project-name (pecona-launchpad-url-get)))
-             (top-dir (percona-top-dir-get)))
-             (percona-project-root-put project-root)
-             (run-it (concat top-dir "/percona_create_branches_wrapper.sh server " project-root))))
+  (let
+    ((project-root (percona-generate-project-name (pecona-launchpad-url-get)))
+     (top-dir (percona-top-dir-get)))
+    (percona-project-root-put project-root)
+    (run-it (concat top-dir "/percona_create_branches_wrapper.sh server " project-root))))
 
 (defun percona-project-setup ()
-       "setup project associated with current heading"
-       (interactive)
-       (cond ((percona-xtrabackup-p) (percona-xtrabackup-setup))
-             ((percona-server-p) (percona-server-setup))))
+  "setup project associated with current heading"
+  (interactive)
+  (cond
+    ((percona-xtrabackup-p) (percona-xtrabackup-setup))
+    ((percona-server-p) (percona-server-setup))))
 
 (defun percona-goto-project ()
-       "reveal project associated with current heading in iTerm2"
-       (interactive)
-       (let ((project-root (percona-project-root-get))
-             (top-dir (percona-top-dir-get)))
-             (shell-command (concat (file-name-as-directory top-dir) "reveal_terminal_at.sh " project-root))))
+  "reveal project associated with current heading in iTerm2"
+  (interactive)
+  (let
+    ((project-root (percona-project-root-get))
+     (top-dir (percona-top-dir-get)))
+    (shell-command (concat (file-name-as-directory top-dir) "reveal_terminal_at.sh " project-root))))
 
 (defun percona-project-root-get ()
   (org-entry-get nil "project-root" 'inherit))
