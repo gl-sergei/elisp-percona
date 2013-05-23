@@ -1,5 +1,5 @@
-This is a set of elisp macroses to manage my daily projects for Percona
-=======================================================================
+This is a set of elisp macro commands to manage my daily projects for Percona
+=============================================================================
 
 
 percona-project-setup
