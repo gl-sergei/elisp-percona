@@ -115,7 +115,7 @@
 (defun percona-project-dir-get ()
   (cond
     ((percona-pam-p) "")
-    (t (percona-project-version-get) "-" (percona-project-root-get))))
+    (t (concat (percona-project-version-get) "-" (percona-project-root-get)))))
 
 (defun percona-project-root-put (project-root)
   (org-entry-put nil "project-root" project-root))
