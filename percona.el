@@ -68,7 +68,10 @@
 
 (defun percona-server-setup ()
   (let
-    ((project-root (percona-generate-project-name (percona-launchpad-url-get)))
+    ((project-root
+      (concat
+        (percona-project-prefix-get (org-entry-get nil "issue" 'inherit))
+        (percona-generate-project-name (percona-launchpad-url-get))))
      (top-dir (percona-top-dir-get)))
     (percona-project-root-put project-root)
     (run-it (concat top-dir "/percona_create_branches_wrapper.sh server " project-root))))
