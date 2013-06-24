@@ -52,10 +52,12 @@
   (cadr (split-string path "=")))
 
 (defun percona-project-prefix-get (eventum-url)
-  (let
-    ((issue-type-prefix (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
-     (path (url-filename (url-generic-parse-url eventum-url))))
-    (concat issue-type-prefix (eventum-path-id-get path) "-")))
+  (cond
+    (eventum-url
+      (let
+        ((issue-type-prefix (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
+         (path (url-filename (url-generic-parse-url eventum-url))))
+        (concat issue-type-prefix (eventum-path-id-get path) "-")))))
 
 (defun percona-xtrabackup-setup ()
   (let
