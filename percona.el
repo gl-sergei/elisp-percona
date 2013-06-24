@@ -1,4 +1,5 @@
 (require 'url)
+(require 'cl)
 
 (defun percona-top-dir-get ()
   "~/percona/repo")
