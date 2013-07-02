@@ -1,6 +1,9 @@
 (require 'url)
 (require 'cl)
 
+(defun percona-launchpad-user ()
+  "sergei.glushchenko")
+
 (defun percona-top-dir-get ()
   "~/percona/repo")
 
@@ -36,55 +39,78 @@
 (defun launchpad-url-ticket-id-get (launchpad-url)
   (launchpad-path-id-get (url-filename)))
 
-(defun percona-generate-project-name (launchpad-url)
+(defun percona-project-name-gen ()
   (let
-    ((path (launchpad-url-path-get launchpad-url)))
+    ((path (launchpad-url-path-get (percona-launchpad-url-get))))
     (concat (launchpad-path-project-get path)
     (launchpad-path-type-get path)
     (launchpad-path-id-get path))))
+
+(defun percona-launchpad-branch-name-gen ()
+  (format
+    "lp:~%s/%s/%s"
+    (percona-launchpad-user)
+    (percona-launchpad-project-get)
+    (percona-project-dir-get)))
 
 (defun run-it (command)
   (async-shell-command command "*checkout*")
   (pop-to-buffer "*checkout*")
   (buffer-disable-undo))
 
-(defun eventum-path-id-get (path)
-  (cadr (split-string path "=")))
+(defun eventum-path-id-get (eventum-path)
+  (cadr (split-string eventum-path "=")))
 
-(defun percona-project-prefix-get (eventum-url)
-  (cond
-    (eventum-url
-      (let
-        ((issue-type-prefix (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
-         (path (url-filename (url-generic-parse-url eventum-url))))
-        (concat issue-type-prefix (eventum-path-id-get path) "-")))))
+(defun eventum-url ()
+  (org-entry-get nil "issue" 'inherit))
+
+(defun percona-project-prefix-get ()
+  (let ((eventum-url (eventum-url)))
+    (cond
+      (eventum-url
+        (let
+          ((issue-type-prefix (if (member "bt" (org-get-tags-at nil)) "BT" "ST"))
+           (path (url-filename (url-generic-parse-url eventum-url))))
+          (concat issue-type-prefix (eventum-path-id-get path) "-"))))))
 
 (defun percona-xtrabackup-setup ()
   (let
     ((project-root
       (concat
-        (percona-project-prefix-get (org-entry-get nil "issue" 'inherit))
-        (percona-generate-project-name (percona-launchpad-url-get))))
+        (percona-project-prefix-get)
+        (percona-project-name-gen)))
      (top-dir (percona-top-dir-get)))
     (org-entry-put nil "project-root" project-root)
-    (run-it (concat top-dir "/percona_create_branches_wrapper.sh xb " project-root))))
+    (run-it
+      (concat
+        top-dir
+        "/percona_create_branches_wrapper.sh xb "
+        project-root))))
 
 (defun percona-server-setup ()
   (let
     ((project-root
       (concat
-        (percona-project-prefix-get (org-entry-get nil "issue" 'inherit))
-        (percona-generate-project-name (percona-launchpad-url-get))))
+        (percona-project-prefix-get)
+        (percona-project-name-gen)))
      (top-dir (percona-top-dir-get)))
     (percona-project-root-put project-root)
-    (run-it (concat top-dir "/percona_create_branches_wrapper.sh server " project-root))))
+    (run-it
+      (concat
+        top-dir
+        "/percona_create_branches_wrapper.sh server "
+        project-root))))
 
 (defun percona-pam-setup ()
   (let
-    ((project-root (percona-generate-project-name (percona-launchpad-url-get)))
+    ((project-root (percona-project-name-gen))
      (top-dir (percona-top-dir-get)))
     (percona-project-root-put project-root)
-    (run-it (concat top-dir "/percona_create_branches_wrapper.sh pam " project-root))))
+    (run-it
+      (concat
+        top-dir
+        "/percona_create_branches_wrapper.sh pam "
+        project-root))))
 
 (defun percona-project-setup ()
   "setup project associated with current heading"
@@ -101,7 +127,11 @@
   (let
     ((project-root (percona-project-root-get))
      (top-dir (percona-top-dir-get)))
-    (shell-command (concat (file-name-as-directory top-dir) "reveal_terminal_at.sh " project-root))))
+    (shell-command
+      (concat
+        (file-name-as-directory top-dir)
+        "reveal_terminal_at.sh "
+        project-root))))
 
 (defun percona-project-root-get ()
   (org-entry-get nil "project-root" 'inherit))
@@ -136,16 +166,19 @@
   (launchpad-path-id-get (launchpad-url-path-get (percona-launchpad-url-get))))
 
 (defun percona-launchpad-project-get ()
-  (cadr (split-string (launchpad-url-path-get (percona-launchpad-url-get)) "/")))
+  (cadr
+    (split-string (launchpad-url-path-get (percona-launchpad-url-get)) "/")))
 
 (defun percona-pam-p ()
   (launchpad-path-pam-p (launchpad-url-path-get (percona-launchpad-url-get))))
 
 (defun percona-xtrabackup-p ()
-  (launchpad-path-xtrabackup-p (launchpad-url-path-get (percona-launchpad-url-get))))
+  (launchpad-path-xtrabackup-p
+    (launchpad-url-path-get (percona-launchpad-url-get))))
 
 (defun percona-server-p ()
-  (launchpad-path-server-p (launchpad-url-path-get (percona-launchpad-url-get))))
+  (launchpad-path-server-p
+    (launchpad-url-path-get (percona-launchpad-url-get))))
 
 (defun trim (line)
   (replace-regexp-in-string "\\`[ \t\n]*" ""
@@ -189,5 +222,14 @@
               (percona-project-dir-full-get)
               f
               bug-id))))))
+
+(defun percona-branch-push ()
+  (interactive)
+  (run-it
+    (format
+      "%s/percona_push.sh %s %s"
+      (percona-top-dir-get)
+      (percona-project-dir-full-get)
+      (percona-launchpad-branch-name-gen))))
 
 (provide 'percona)
