@@ -140,6 +140,7 @@
   (let
       ((project-root (percona-project-root-get))
        (top-dir (percona-top-dir-get)))
+    (message "project name killed")
     (kill-new
      (concat
       (file-name-as-directory top-dir)
