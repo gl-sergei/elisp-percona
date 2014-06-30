@@ -146,6 +146,20 @@
       (file-name-as-directory top-dir)
       project-root))))
 
+
+(defun percona-project-path-eshell ()
+  "Open shell for current project"
+  (interactive)
+  (let*
+      ((dir (percona-project-dir-full-get)))
+    (eshell)
+    (with-current-buffer "*eshell*"
+      (insert
+       (concat
+        "cd "
+        dir))
+      (eshell-send-input))))
+
 (defun percona-project-root-get ()
   (org-entry-get nil "project-root" 'inherit))
 
